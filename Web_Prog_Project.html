@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MemoryVerse</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap"/>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+:root {
+  --bg:#07060F; --sur:#0F0E1C; --card:#141228; --bdr:rgba(255,255,255,0.07);
+  --acc:#7C6EFA; --ac2:#FA6E9A; --txt:#E8E6FF; --mut:#5C5A7A;
+  --ok:#00E5A0; --warn:#FFB340; --err:#FF5E5E;
+  --nav:rgba(7,6,15,0.92); --r:18px; --f:'Outfit',sans-serif;
+  --sh:0 24px 80px rgba(0,0,0,0.6); --ga:rgba(124,110,250,0.4); --gs:rgba(0,229,160,0.35);
+}
+.light { --bg:#F2F0FF; --sur:#FFF; --card:#FAFAFE; --bdr:rgba(100,80,220,0.12); --txt:#1A1730; --mut:#7A78A8; --nav:rgba(242,240,255,0.92); --ga:rgba(100,80,220,0.25); --sh:0 24px 80px rgba(80,60,180,0.12); }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--f);background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden;transition:background .4s,color .4s}
+::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-thumb{background:var(--acc);border-radius:99px}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{from{opacity:0;transform:scale(0.7) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.55}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 var(--gs)}50%{box-shadow:0 0 0 10px transparent}}
+@keyframes confFall{0%{transform:translateY(-10px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes orb{0%{transform:translate(0,0) scale(1)}33%{transform:translate(60px,-40px) scale(1.1)}66%{transform:translate(-30px,50px) scale(.9)}100%{transform:translate(0,0) scale(1)}}
+@keyframes comboAnim{0%{transform:scale(0) rotate(-20deg);opacity:0}30%{transform:scale(1.4) rotate(5deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--nav);backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,4vw,40px);height:64px}
+.nav-logo{font-size:22px;font-weight:800;background:linear-gradient(135deg,var(--acc),var(--ac2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;cursor:pointer}
+.nav-links{display:flex;gap:4px}
+.nl{padding:7px 14px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--mut);transition:all .2s;border:none;background:transparent;font-family:var(--f)}
+.nl:hover{background:rgba(124,110,250,.1);color:var(--txt)} .nl.on{background:rgba(124,110,250,.15);color:var(--acc)}
+.ibtn{width:36px;height:36px;border-radius:10px;border:1px solid var(--bdr);background:var(--sur);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s;color:var(--txt)}
+.ibtn:hover{background:var(--card);border-color:var(--acc);transform:scale(1.05)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 28px;border-radius:14px;border:none;cursor:pointer;font-family:var(--f);font-weight:700;font-size:15px;transition:all .2s;white-space:nowrap}
+.bp{background:linear-gradient(135deg,var(--acc),#5C51D4);color:#fff;box-shadow:0 8px 32px var(--ga)} .bp:hover{transform:translateY(-2px);box-shadow:0 12px 40px var(--ga)}
+.bs{background:var(--sur);color:var(--txt);border:1px solid var(--bdr)} .bs:hover{background:var(--card);border-color:var(--acc)}
+.bd{background:linear-gradient(135deg,var(--err),#C33);color:#fff}
+.sm{padding:8px 18px;font-size:13px;border-radius:10px}
+
+.gc{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:24px;backdrop-filter:blur(10px)}
+.chip{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:12px 16px;text-align:center}
+.chip-v{font-size:20px;font-weight:800;line-height:1} .chip-l{font-size:10px;color:var(--mut);margin-top:4px;text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+.ba{background:rgba(124,110,250,.15);color:var(--acc);border:1px solid rgba(124,110,250,.3)}
+.bs2{background:rgba(0,229,160,.12);color:var(--ok);border:1px solid rgba(0,229,160,.3)}
+.bw{background:rgba(255,179,64,.12);color:var(--warn);border:1px solid rgba(255,179,64,.3)}
+.be{background:rgba(255,94,94,.12);color:var(--err);border:1px solid rgba(255,94,94,.3)}
+
+.page{min-height:100vh;padding-top:80px;animation:fadeIn .4s ease}
+.con{max-width:1100px;margin:0 auto;padding:0 clamp(16px,4vw,40px)}
+.sec{padding:64px 0}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.g4{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.fc{display:flex;align-items:center;justify-content:center}
+.fb{display:flex;align-items:center;justify-content:space-between}
+.fg{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tc{text-align:center} .tm{color:var(--mut)}
+.mt8{margin-top:8px} .mt12{margin-top:12px} .mt16{margin-top:16px} .mt24{margin-top:24px} .mt32{margin-top:32px} .mt48{margin-top:48px}
+
+.h1{font-size:clamp(40px,7vw,80px);font-weight:900;line-height:1;letter-spacing:-2px}
+.h2{font-size:clamp(28px,4vw,48px);font-weight:800;letter-spacing:-1px}
+.h3{font-size:clamp(20px,3vw,28px);font-weight:700;letter-spacing:-.5px}
+.h4{font-size:18px;font-weight:700}
+.gt{background:linear-gradient(135deg,var(--acc) 0%,var(--ac2) 60%,var(--warn) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+.pg{display:flex;gap:8px;flex-wrap:wrap}
+.pill{padding:8px 20px;border-radius:99px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--bdr);background:var(--sur);color:var(--mut);transition:all .2s;font-family:var(--f)}
+.pill.on{background:var(--acc);color:#fff;border-color:var(--acc);box-shadow:0 4px 16px var(--ga)}
+.pill:hover:not(.on){border-color:var(--acc);color:var(--txt)}
+
+.pt{height:6px;background:var(--card);border-radius:99px;overflow:hidden}
+.pb{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--acc),var(--ac2));transition:width .5s ease}
+
+.input{width:100%;padding:12px 16px;border-radius:12px;background:var(--card);border:1px solid var(--bdr);color:var(--txt);font-family:var(--f);font-size:15px;transition:all .2s;outline:none}
+.input:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(124,110,250,.15)}
+.input::placeholder{color:var(--mut)}
+.fl{font-size:13px;font-weight:600;color:var(--mut);margin-bottom:8px;display:block;text-transform:uppercase;letter-spacing:.5px}
+
+/* Game card */
+.gcw{perspective:700px;cursor:pointer;user-select:none}
+.gcw.dis{cursor:default;pointer-events:none}
+.gci{position:relative;width:100%;padding-bottom:100%;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,1.6,.55,.9)}
+.gci.flipped{transform:rotateY(180deg)}
+.gcf{position:absolute;inset:0;border-radius:14px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;align-items:center;justify-content:center}
+.gcb{background:linear-gradient(135deg,#2A2650,#1A1535);border:1px solid rgba(124,110,250,.25);box-shadow:0 4px 20px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08)}
+.gcb::before{content:'✦';color:rgba(124,110,250,.5);font-size:clamp(16px,3vw,26px)}
+.gcfr{background:var(--card);transform:rotateY(180deg);border:1px solid var(--bdr);box-shadow:0 4px 20px rgba(0,0,0,.2);font-size:clamp(18px,4vw,36px);transition:background .3s,box-shadow .3s,border-color .3s}
+.gcfr.matched{background:linear-gradient(135deg,rgba(0,229,160,.12),rgba(0,180,120,.08));border-color:rgba(0,229,160,.45);box-shadow:0 0 20px rgba(0,229,160,.25);animation:glow 2s ease infinite}
+.gci.shake{animation:shake .4s ease}
+
+.overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px}
+.mbox{background:var(--sur);border:1px solid var(--bdr);border-radius:24px;padding:36px 32px;width:100%;max-width:460px;box-shadow:var(--sh);animation:popIn .4s cubic-bezier(.4,2,.55,.44);max-height:90vh;overflow-y:auto}
+
+.toast{position:fixed;bottom:28px;right:28px;z-index:300;background:var(--sur);border:1px solid var(--bdr);border-radius:14px;padding:14px 20px;box-shadow:var(--sh);animation:slideIn .35s ease;display:flex;align-items:center;gap:12px;max-width:320px;font-size:14px;font-weight:500}
+.combo-banner{position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:150;pointer-events:none;background:linear-gradient(135deg,var(--warn),#FF8C00);color:#fff;border-radius:14px;padding:10px 24px;font-size:22px;font-weight:900;box-shadow:0 8px 32px rgba(255,179,64,.45);animation:comboAnim .5s cubic-bezier(.4,2,.55,.44) forwards;white-space:nowrap}
+.confetti-piece{position:fixed;top:-20px;pointer-events:none;z-index:999;animation:confFall linear forwards}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;opacity:.4;animation:orb 15s ease-in-out infinite}
+
+.ac-card{padding:16px;border-radius:14px;background:var(--card);border:1px solid var(--bdr);display:flex;align-items:center;gap:14px;transition:all .25s}
+.ac-card.ul{border-color:rgba(255,179,64,.4);background:rgba(255,179,64,.06)}
+.ac-card:hover{transform:translateY(-2px)}
+
+.lbr{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:12px;background:var(--card);border:1px solid var(--bdr);transition:all .2s}
+.lbr:hover{border-color:var(--acc)} .lbr.me{border-color:rgba(124,110,250,.5);background:rgba(124,110,250,.07)} .lbr.t1{border-color:rgba(255,179,64,.5);background:rgba(255,179,64,.07)}
+
+.cbw{display:flex;align-items:flex-end;gap:6px;height:120px;padding:0 4px}
+.cb{flex:1;border-radius:6px 6px 0 0;min-width:20px;background:linear-gradient(to top,var(--acc),var(--ac2));transition:height .6s ease}
+
+.step-card{display:flex;align-items:flex-start;gap:20px;padding:24px;border-radius:18px;background:var(--sur);border:1px solid var(--bdr);animation:fadeUp .5s ease both}
+.step-num{width:44px;height:44px;border-radius:12px;flex-shrink:0;background:linear-gradient(135deg,var(--acc),#5C51D4);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff}
+
+.tr{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-bottom:1px solid var(--bdr)}
+.tsw{width:44px;height:24px;border-radius:12px;cursor:pointer;position:relative;transition:background .3s;flex-shrink:0}
+.tsw.on{background:var(--acc)} .tsw.off{background:var(--mut)}
+.tth{position:absolute;top:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:left .3s}
+.tsw.on .tth{left:23px} .tsw.off .tth{left:3px}
+
+.av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;background:linear-gradient(135deg,var(--acc),var(--ac2));color:#fff;flex-shrink:0}
+
+@media(max-width:640px){
+  .nav-links{display:none}
+  .mnav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--nav);backdrop-filter:blur(20px);border-top:1px solid var(--bdr);display:flex;justify-content:space-around;padding:8px 0 12px}
+  .mnb{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 12px;border-radius:10px;border:none;background:transparent;color:var(--mut);font-size:10px;font-family:var(--f);font-weight:600;transition:all .2s}
+  .mnb.on{color:var(--acc)} .mnb span:first-child{font-size:20px}
+  .page{padding-bottom:80px}
+}
+@media(min-width:641px){.mnav{display:none}}
+</style>
+</head>
+<body><div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef, useMemo, memo, createContext, useContext } = React;
+
+// ── Constants ──────────────────────────────────────────
+const EMOJIS = ["🦊","🐼","🦁","🐸","🦋","🐬","🦄","🐙","🦀","🦎","🐳","🦜","🐝","🦩","🦚","🦕","🦑","🦧","🦔","🦦","🌸","🍄","🌻","🌵","🎭","🎪","🎨","🎯","🚀","🌈","⚡","🔮"];
+
+const DIFFS = {
+  easy:    { label:"Easy",    icon:"🌱", pairs:8,  cols:4, lives:10 },
+  medium:  { label:"Medium",  icon:"⚡", pairs:12, cols:6, lives:8  },
+  hard:    { label:"Hard",    icon:"🔥", pairs:18, cols:6, lives:6  },
+  extreme: { label:"Extreme", icon:"💀", pairs:24, cols:6, lives:4  },
+};
+const MODES = {
+  classic:    { label:"Classic",     icon:"♾️",  desc:"Match all pairs, no pressure." },
+  timeattack: { label:"Time Attack", icon:"⏰",  desc:"Race against the clock!" },
+  challenge:  { label:"Challenge",   icon:"❤️",  desc:"Limited lives — every move counts." },
+};
+const ACHS = [
+  { id:"first_win",   icon:"🏆", name:"First Victory",  desc:"Win your first game" },
+  { id:"speed_demon", icon:"⚡", name:"Speed Demon",    desc:"Win in under 30 seconds" },
+  { id:"perfect",     icon:"💎", name:"Perfectionist",  desc:"Win with 0 wrong matches" },
+  { id:"veteran",     icon:"🎖️", name:"Veteran",        desc:"Play 25 games" },
+  { id:"combo_king",  icon:"🔥", name:"Combo King",     desc:"Get a 5x combo streak" },
+  { id:"high_scorer", icon:"⭐", name:"High Scorer",    desc:"Score over 5000 points" },
+  { id:"dedicated",   icon:"🦉", name:"Dedicated",      desc:"Play 10 games" },
+  { id:"extreme_win", icon:"💀", name:"Death Wish",     desc:"Win on Extreme difficulty" },
+];
+
+// ── Utils ──────────────────────────────────────────────
+const shuffle = a => { const b=[...a]; for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; };
+
+// FIX: pick emojis once, duplicate each exactly once, then shuffle
+const buildDeck = pairs => {
+  const chosen = shuffle(EMOJIS).slice(0, pairs);
+  const paired = [];
+  chosen.forEach(e => { paired.push(e); paired.push(e); });
+  return shuffle(paired).map((emoji, id) => ({ id, emoji, flipped:false, matched:false, shake:false }));
+};
+
+const fmt = s => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+const ls  = (k,d) => { try { return JSON.parse(localStorage.getItem(k))??d; } catch { return d; } };
+const ss  = (k,v) => { try { localStorage.setItem(k,JSON.stringify(v)); } catch {} };
+const uid = () => Math.random().toString(36).slice(2,9);
+const score = (t,a,c,d,m) => Math.max(Math.round((1200*({easy:1,medium:1.6,hard:2.8,extreme:5}[d]||1)*({classic:1,timeattack:1.5,challenge:2}[m]||1))-t*2.5-a*6+c*55),50);
+const initStats = () => ({ gamesPlayed:0,gamesWon:0,totalAttempts:0,totalTime:0,bestScore:0,bestTime:0,perfectGames:0,maxCombo:0,extremeWins:0,unlocked:[],history:[] });
+const checkAchs = s => ACHS.filter(a => !(s.unlocked||[]).includes(a.id) && ({
+  first_win:s=>s.gamesWon>=1, speed_demon:s=>s.bestTime>0&&s.bestTime<=30,
+  perfect:s=>s.perfectGames>=1, veteran:s=>s.gamesPlayed>=25,
+  combo_king:s=>s.maxCombo>=5, high_scorer:s=>s.bestScore>=5000,
+  dedicated:s=>s.gamesPlayed>=10, extreme_win:s=>s.extremeWins>=1,
+}[a.id]?.(s))).map(a=>a.id);
+
+// ── Context ────────────────────────────────────────────
+const Ctx = createContext(null);
+const useCtx = () => useContext(Ctx);
+
+function Provider({ children }) {
+  const [theme,   setTheme]   = useState(()=>ls("mv_theme","dark"));
+  const [page,    setPage]    = useState("home");
+  const [diff,    setDiff]    = useState(()=>ls("mv_diff","medium"));
+  const [mode,    setMode]    = useState(()=>ls("mv_mode","classic"));
+  const [soundOn, setSoundOn] = useState(()=>ls("mv_sound",true));
+  const [user,    setUser]    = useState(()=>ls("mv_user",null));
+  const [users,   setUsers]   = useState(()=>ls("mv_users",{}));
+  const [lb,      setLb]      = useState(()=>ls("mv_lb",[]));
+  const [toast,   setToast]   = useState(null);
+  const [newAchs, setNewAchs] = useState([]);
+  const tRef = useRef(null);
+
+  useEffect(()=>ss("mv_theme",theme),[theme]);
+  useEffect(()=>ss("mv_diff",diff),[diff]);
+  useEffect(()=>ss("mv_mode",mode),[mode]);
+  useEffect(()=>ss("mv_sound",soundOn),[soundOn]);
+  useEffect(()=>ss("mv_user",user),[user]);
+  useEffect(()=>ss("mv_users",users),[users]);
+  useEffect(()=>ss("mv_lb",lb),[lb]);
+
+  const showToast = useCallback((msg,icon="✅",ms=3000)=>{
+    setToast({msg,icon}); clearTimeout(tRef.current);
+    tRef.current=setTimeout(()=>setToast(null),ms);
+  },[]);
+
+  const login = useCallback((name,pw,signup)=>{
+    if(signup){
+      if(Object.values(users).find(u=>u.name===name)) return "Username taken";
+      const id=uid(), nu={id,name,password:pw,stats:initStats(),avatar:name.slice(0,2).toUpperCase()};
+      const nu2={...users,[id]:nu}; setUsers(nu2); setUser(nu); return null;
+    }
+    const f=Object.values(users).find(u=>u.name===name&&u.password===pw);
+    if(!f) return "Invalid credentials";
+    setUser(f); return null;
+  },[users]);
+
+  const logout = useCallback(()=>setUser(null),[]);
+
+  const recordGame = useCallback((res)=>{
+    if(!user) return 0;
+    const prev=users[user.id]?.stats||initStats();
+    const {won,time,attempts,combo,perfect}=res;
+    const sc=score(time,attempts,combo,diff,mode);
+    const next={...prev,
+      gamesPlayed:prev.gamesPlayed+1, gamesWon:prev.gamesWon+(won?1:0),
+      totalAttempts:prev.totalAttempts+attempts, totalTime:prev.totalTime+time,
+      bestScore:Math.max(prev.bestScore,won?sc:0),
+      bestTime:won?(prev.bestTime===0?time:Math.min(prev.bestTime,time)):prev.bestTime,
+      perfectGames:prev.perfectGames+(perfect&&won?1:0),
+      maxCombo:Math.max(prev.maxCombo,combo),
+      extremeWins:prev.extremeWins+(won&&diff==="extreme"?1:0),
+      history:[{won,time,attempts,score:sc,diff,mode,date:Date.now()},...(prev.history||[])].slice(0,50),
+    };
+    const ids=checkAchs(next); next.unlocked=[...(prev.unlocked||[]),...ids];
+    const upd={...users[user.id],stats:next};
+    setUsers(u=>({...u,[user.id]:upd})); setUser(upd);
+    if(ids.length) setNewAchs(ids);
+    if(won){ const e={name:user.name,score:sc,time,attempts,diff,mode,date:Date.now(),uid:user.id}; setLb(p=>[...p,e].sort((a,b)=>b.score-a.score).slice(0,100)); }
+    return sc;
+  },[user,users,diff,mode]);
+
+  return (
+    <Ctx.Provider value={{theme,setTheme,page,setPage,diff,setDiff,mode,setMode,soundOn,setSoundOn,user,login,logout,users,lb,recordGame,showToast,newAchs,setNewAchs}}>
+      <div className={theme==="light"?"light":""}>
+        {children}
+        {toast && <div className="toast"><span style={{fontSize:20}}>{toast.icon}</span>{toast.msg}</div>}
+      </div>
+    </Ctx.Provider>
+  );
+}
+
+// ── SFX ───────────────────────────────────────────────
+function useSFX() {
+  const {soundOn}=useCtx(), ac=useRef(null);
+  return useCallback(type=>{
+    if(!soundOn) return;
+    try {
+      if(!ac.current) ac.current=new(window.AudioContext||window.webkitAudioContext)();
+      const a=ac.current;
+      ({flip:[[440,0,.08]],match:[[659,0,.12],[880,.1,.18]],wrong:[[220,0,.06],[180,.07,.1]],
+        win:[[523,0,.2],[659,.1,.2],[784,.2,.25],[1047,.3,.35]],combo:[[880,0,.08],[1100,.07,.12],[1320,.14,.2]]}
+      [type]||[]).forEach(([f,t,d])=>{
+        const o=a.createOscillator(),g=a.createGain();
+        o.connect(g);g.connect(a.destination);o.frequency.value=f;o.type="sine";
+        g.gain.setValueAtTime(.1,a.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+t+d);
+        o.start(a.currentTime+t);o.stop(a.currentTime+t+d+.01);
+      });
+    } catch(_){}
+  },[soundOn]);
+}
+
+// ── Confetti ──────────────────────────────────────────
+function Confetti() {
+  const p=useMemo(()=>Array.from({length:60},(_,i)=>({id:i,left:`${Math.random()*100}%`,delay:`${Math.random()*2.5}s`,color:["#7C6EFA","#FA6E9A","#FFB340","#00E5A0","#60A5FA","#F472B6"][i%6],size:`${5+Math.random()*9}px`,dur:`${2+Math.random()*2.5}s`,round:Math.random()>.5})),[]);
+  return <div style={{position:"fixed",inset:0,pointerEvents:"none",zIndex:999,overflow:"hidden"}}>{p.map(x=><div key={x.id} className="confetti-piece" style={{left:x.left,width:x.size,height:x.size,background:x.color,borderRadius:x.round?"50%":"3px",animationDuration:x.dur,animationDelay:x.delay}}/>)}</div>;
+}
+
+// ── GameCard ──────────────────────────────────────────
+const GameCard = memo(({card,onClick,disabled})=>(
+  <div className={`gcw${disabled?" dis":""}`} onClick={()=>onClick(card.id)}>
+    <div className={`gci${card.flipped||card.matched?" flipped":""}${card.shake?" shake":""}`}>
+      <div className="gcf gcb"/>
+      <div className={`gcf gcfr${card.matched?" matched":""}`}>{card.emoji}</div>
+    </div>
+  </div>
+));
+
+// ── Modals ────────────────────────────────────────────
+const WinModal = ({attempts,time,sc,combo,diff,mode,onRestart,onHome})=>(
+  <div className="overlay"><Confetti/>
+    <div className="mbox tc">
+      <div style={{fontSize:56,marginBottom:8,animation:"float 2s ease infinite"}}>🏆</div>
+      <h2 className="h3 gt">Victory!</h2>
+      <p className="tm mt8" style={{fontSize:13}}>{DIFFS[diff].label} · {MODES[mode].label}</p>
+      <div className="g2 mt24" style={{gap:10}}>
+        {[["⚡","Score",sc],["🎯","Attempts",attempts],["⏱","Time",fmt(time)],["🔥","Combo",`${combo}x`]].map(([ic,l,v])=>(
+          <div className="chip" key={l}><div className="chip-v">{ic} {v}</div><div className="chip-l">{l}</div></div>
+        ))}
+      </div>
+      <div className="fg mt24" style={{justifyContent:"center"}}>
+        <button className="btn bp" onClick={onRestart}>↺ Play Again</button>
+        <button className="btn bs" onClick={onHome}>🏠 Home</button>
+      </div>
+    </div>
+  </div>
+);
+
+const LoseModal = ({reason,onRestart,onHome})=>(
+  <div className="overlay">
+    <div className="mbox tc">
+      <div style={{fontSize:56,marginBottom:8}}>💔</div>
+      <h2 className="h3" style={{color:"var(--err)"}}>Game Over</h2>
+      <p className="tm mt12">{reason}</p>
+      <div className="fg mt24" style={{justifyContent:"center"}}>
+        <button className="btn bp" onClick={onRestart}>↺ Try Again</button>
+        <button className="btn bs" onClick={onHome}>🏠 Home</button>
+      </div>
+    </div>
+  </div>
+);
+
+function AchToast({achIds,onDone}) {
+  const items=ACHS.filter(a=>achIds.includes(a.id));
+  useEffect(()=>{const t=setTimeout(onDone,4000);return()=>clearTimeout(t);},[]);
+  return <div style={{position:"fixed",top:80,right:20,zIndex:300,display:"flex",flexDirection:"column",gap:10}}>
+    {items.map(a=><div key={a.id} className="toast" style={{borderColor:"rgba(255,179,64,.4)"}}><span style={{fontSize:24}}>{a.icon}</span><div><div style={{fontWeight:700,fontSize:13}}>Achievement Unlocked!</div><div style={{color:"var(--warn)",fontWeight:600,fontSize:12}}>{a.name}</div></div></div>)}
+  </div>;
+}
+
+// ── GamePage ──────────────────────────────────────────
+function GamePage() {
+  const {diff,setDiff,mode,setMode,recordGame,showToast,newAchs,setNewAchs,setPage}=useCtx();
+  const sfx=useSFX(), cfg=DIFFS[diff];
+  const isTA=mode==="timeattack", isCH=mode==="challenge";
+  const TL={easy:120,medium:90,hard:60,extreme:45};
+
+  const [cards,      setCards]      = useState(()=>buildDeck(cfg.pairs));
+  const [flipped,    setFlipped]    = useState([]); // currently selected card IDs (max 2)
+  const [matched,    setMatched]    = useState(new Set()); // permanently matched IDs
+  const [isChecking, setIsChecking] = useState(false); // lock during comparison
+  const [attempts,   setAttempts]   = useState(0);
+  const [wrongCount, setWrongCount] = useState(0);
+  const [time,       setTime]       = useState(()=>isTA?TL[diff]:0);
+  const [running,    setRunning]    = useState(false);
+  const [combo,      setCombo]      = useState(0);
+  const [maxCombo,   setMaxCombo]   = useState(0);
+  const [lives,      setLives]      = useState(cfg.lives);
+  const [won,        setWon]        = useState(false);
+  const [lost,       setLost]       = useState(false);
+  const [loseReason, setLoseReason] = useState("");
+  const [banner,     setBanner]     = useState(null);
+  const [finalScore, setFinalScore] = useState(0);
+  const timerRef=useRef(null), banRef=useRef(null);
+
+  // Timer
+  useEffect(()=>{
+    if(!running){clearInterval(timerRef.current);return;}
+    timerRef.current=setInterval(()=>setTime(t=>{
+      if(isTA){
+        if(t<=1){clearInterval(timerRef.current);setRunning(false);setLost(true);setLoseReason("Time's up! ⏰");return 0;}
+        return t-1;
+      }
+      return t+1;
+    }),1000);
+    return()=>clearInterval(timerRef.current);
+  },[running,isTA]);
+
+  // Card click — FIX: isChecking set synchronously; match logic inside setCards for fresh state
+  const handleCard = useCallback(id=>{
+    if(won||lost||isChecking||matched.has(id)||flipped.includes(id)) return;
+    if(!running) setRunning(true);
+    sfx("flip");
+    const next=[...flipped,id];
+
+    if(next.length===1){
+      setFlipped(next);
+      setCards(p=>p.map(c=>c.id===id?{...c,flipped:true}:c));
+    } else {
+      // Lock immediately so no 3rd click can arrive
+      setIsChecking(true);
+      setFlipped(next);
+      setCards(p=>p.map(c=>c.id===id?{...c,flipped:true}:c));
+
+      const [aId,bId]=next;
+      setCards(prev=>{
+        const a=prev.find(c=>c.id===aId), b=prev.find(c=>c.id===bId);
+        if(!a||!b){setIsChecking(false);setFlipped([]);return prev;}
+
+        if(a.emoji===b.emoji){
+          // ✅ Match
+          sfx("match");
+          const updated=prev.map(c=>aId===c.id||bId===c.id?{...c,flipped:true,matched:true}:c);
+          setCombo(pc=>{
+            const nc=pc+1; setMaxCombo(m=>Math.max(m,nc));
+            if(nc>=2){sfx("combo");setBanner(`${nc}x COMBO! 🔥`);clearTimeout(banRef.current);banRef.current=setTimeout(()=>setBanner(null),1400);}
+            return nc;
+          });
+          setMatched(pm=>{
+            const nm=new Set(pm); nm.add(aId); nm.add(bId);
+            if(nm.size===updated.length){
+              clearInterval(timerRef.current); setRunning(false); setWon(true); sfx("win");
+              setTime(ct=>{ setAttempts(ca=>{ setWrongCount(cw=>{ setCombo(cc=>{
+                const sc=recordGame({won:true,time:ct,attempts:ca+1,combo:cc,perfect:cw===0});
+                setFinalScore(sc); showToast(`Score: ${sc} pts! 🎉`,"🏆");
+                return cc;
+              });return cw;});return ca+1;});return ct;});
+            }
+            return nm;
+          });
+          setAttempts(a=>a+1); setFlipped([]); setIsChecking(false);
+          return updated;
+        } else {
+          // ❌ No match
+          sfx("wrong"); setCombo(0); setWrongCount(w=>w+1); setAttempts(a=>a+1);
+          const shaken=prev.map(c=>aId===c.id||bId===c.id?{...c,flipped:true,shake:true}:c);
+          setTimeout(()=>{
+            setCards(p=>p.map(c=>aId===c.id||bId===c.id?{...c,flipped:false,shake:false}:c));
+            setFlipped([]); setIsChecking(false);
+            if(isCH) setLives(l=>{
+              const nl=l-1;
+              if(nl<=0){clearInterval(timerRef.current);setRunning(false);setLost(true);setLoseReason("No lives left! 💔");}
+              return nl;
+            });
+          },700);
+          return shaken;
+        }
+      });
+    }
+  },[won,lost,isChecking,matched,flipped,running,sfx,isCH,recordGame,showToast]);
+
+  const restart=useCallback((nd=diff,nm=mode)=>{
+    const nc=DIFFS[nd]; clearInterval(timerRef.current); clearTimeout(banRef.current);
+    setDiff(nd); setMode(nm);
+    setCards(buildDeck(nc.pairs)); setFlipped([]); setMatched(new Set()); setIsChecking(false);
+    setAttempts(0); setWrongCount(0); setTime(nm==="timeattack"?TL[nd]:0); setRunning(false);
+    setCombo(0); setMaxCombo(0); setLives(nc.lives); setWon(false); setLost(false);
+    setLoseReason(""); setBanner(null); setFinalScore(0);
+  },[diff,mode]);
+
+  const hint=useCallback(()=>{
+    if(isChecking) return;
+    const un=cards.filter(c=>!c.matched&&!c.flipped);
+    const pick=un[Math.floor(Math.random()*un.length)];
+    const pair=pick&&un.find(c=>c.emoji===pick.emoji&&c.id!==pick.id);
+    if(!pick||!pair) return;
+    setCards(p=>p.map(c=>c.id===pick.id||c.id===pair.id?{...c,flipped:true}:c));
+    setTimeout(()=>setCards(p=>p.map(c=>c.id===pick.id||c.id===pair.id?{...c,flipped:false}:c)),1200);
+  },[cards,isChecking]);
+
+  const pairsFound=matched.size/2, total=cards.length/2;
+  const liveScore=score(time,attempts,combo,diff,mode);
+
+  return (
+    <div className="page">
+      {won&&<WinModal attempts={attempts} time={time} sc={finalScore||liveScore} combo={maxCombo} diff={diff} mode={mode} onRestart={()=>restart()} onHome={()=>setPage("home")}/>}
+      {lost&&<LoseModal reason={loseReason} onRestart={()=>restart()} onHome={()=>setPage("home")}/>}
+      {banner&&<div className="combo-banner">{banner}</div>}
+      {newAchs.length>0&&<AchToast achIds={newAchs} onDone={()=>setNewAchs([])}/>}
+
+      <div className="con">
+        {/* Selectors */}
+        <div style={{display:"flex",flexWrap:"wrap",gap:12,alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
+          <div className="pg">{Object.entries(DIFFS).map(([k,v])=><button key={k} className={`pill${diff===k?" on":""}`} onClick={()=>restart(k,mode)}>{v.icon} {v.label}</button>)}</div>
+          <div className="pg">{Object.entries(MODES).map(([k,v])=><button key={k} className={`pill${mode===k?" on":""}`} onClick={()=>restart(diff,k)} style={{fontSize:12}}>{v.icon} {v.label}</button>)}</div>
+        </div>
+
+        {/* HUD */}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(90px,1fr))",gap:10,marginBottom:20}}>
+          {[
+            {l:"Time",v:fmt(time),i:"⏱",pulse:running&&isTA&&time<=10,warn:isTA&&time<=15},
+            {l:"Score",v:liveScore,i:"⚡"},
+            {l:"Attempts",v:attempts,i:"🎯"},
+            {l:"Combo",v:`${combo}x`,i:"🔥",pulse:combo>=2},
+            {l:"Pairs",v:`${pairsFound}/${total}`,i:"🃏"},
+            ...(isCH?[{l:"Lives",v:"❤️".repeat(Math.max(0,lives)),i:""}]:[]),
+          ].map(s=>(
+            <div key={s.l} className="chip" style={{animation:s.pulse?"pulse .8s infinite":undefined,borderColor:s.warn?"var(--err)":""}}>
+              <div className="chip-v">{s.i&&`${s.i} `}{s.v}</div>
+              <div className="chip-l">{s.l}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Progress */}
+        <div className="pt" style={{marginBottom:20}}><div className="pb" style={{width:`${(pairsFound/total)*100}%`}}/></div>
+
+        {/* Grid */}
+        <div style={{display:"grid",gridTemplateColumns:`repeat(${cfg.cols},1fr)`,gap:"clamp(6px,1.5vw,12px)",maxWidth:cfg.cols===6?580:460,margin:"0 auto"}}>
+          {cards.map(c=><GameCard key={c.id} card={c} onClick={handleCard} disabled={c.matched||c.flipped||isChecking}/>)}
+        </div>
+
+        {/* Actions */}
+        <div className="fg mt24" style={{justifyContent:"center"}}>
+          <button className="btn bs sm" onClick={()=>restart()}>↺ Restart</button>
+          <button className="btn bs sm" onClick={hint}>💡 Hint</button>
+          <button className="btn bs sm" onClick={()=>setPage("home")}>🏠 Home</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── HomePage ──────────────────────────────────────────
+function HomePage() {
+  const {setPage,user,diff,setDiff,mode,setMode}=useCtx();
+  const ES=["🦊","🐼","🦁","🐸","🦋","🐬"];
+  const [fl,setFl]=useState([0,2,4]);
+  useEffect(()=>{
+    const id=setInterval(()=>setFl(f=>{const p=[0,1,2,3,4,5].filter(i=>!f.includes(i));return p.length?[...f,p[Math.floor(Math.random()*p.length)]].slice(-3):[];}),1200);
+    return()=>clearInterval(id);
+  },[]);
+
+  return (
+    <div className="page">
+      <div style={{position:"fixed",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:0}}>
+        <div className="orb" style={{width:500,height:500,background:"var(--acc)",top:"10%",left:"20%"}}/>
+        <div className="orb" style={{width:400,height:400,background:"var(--ac2)",top:"50%",right:"15%",animationDelay:"-5s"}}/>
+        <div className="orb" style={{width:300,height:300,background:"var(--warn)",bottom:"10%",left:"10%",animationDelay:"-10s"}}/>
+      </div>
+      <div className="con" style={{position:"relative",zIndex:1}}>
+        <section className="sec tc" style={{paddingTop:32}}>
+          <div className="badge ba mt12" style={{marginBottom:20}}>✦ The Ultimate Memory Challenge</div>
+          <h1 className="h1">Train Your<br/><span className="gt">Memory</span></h1>
+          <p style={{fontSize:18,color:"var(--mut)",maxWidth:520,margin:"20px auto 0",lineHeight:1.7}}>Flip cards, find pairs, beat your scores — with multiple modes, achievements, and leaderboards.</p>
+
+          {/* Demo cards */}
+          <div style={{display:"flex",justifyContent:"center",gap:10,margin:"36px 0",flexWrap:"wrap"}}>
+            {ES.map((e,i)=>(
+              <div key={i} style={{width:64,height:64,perspective:400}}>
+                <div style={{width:"100%",height:"100%",transformStyle:"preserve-3d",transform:fl.includes(i)?"rotateY(180deg)":"rotateY(0)",transition:"transform .55s cubic-bezier(.4,2,.55,.44)",position:"relative"}}>
+                  <div style={{position:"absolute",inset:0,borderRadius:12,background:"linear-gradient(135deg,#2A2650,#1A1535)",backfaceVisibility:"hidden",display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid rgba(124,110,250,.3)",fontSize:20}}>✦</div>
+                  <div style={{position:"absolute",inset:0,borderRadius:12,background:"var(--card)",transform:"rotateY(180deg)",backfaceVisibility:"hidden",display:"flex",alignItems:"center",justifyContent:"center",border:"1px solid var(--bdr)",fontSize:28}}>{e}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="gc" style={{maxWidth:500,margin:"0 auto 32px",textAlign:"left"}}>
+            <div style={{marginBottom:16}}>
+              <div className="fl">Difficulty</div>
+              <div className="pg">{Object.entries(DIFFS).map(([k,v])=><button key={k} className={`pill${diff===k?" on":""}`} onClick={()=>setDiff(k)}>{v.icon} {v.label}</button>)}</div>
+            </div>
+            <div>
+              <div className="fl">Mode</div>
+              <div className="pg">{Object.entries(MODES).map(([k,v])=><button key={k} className={`pill${mode===k?" on":""}`} onClick={()=>setMode(k)} style={{fontSize:12}}>{v.icon} {v.label}</button>)}</div>
+            </div>
+          </div>
+
+          <button className="btn bp" style={{padding:"16px 48px",fontSize:18}} onClick={()=>setPage("game")}>🚀 Start Playing</button>
+          {!user&&<p className="tm mt16" style={{fontSize:13}}><button className="btn bs sm" onClick={()=>setPage("profile")}>Sign in</button>{" "}to save scores & earn achievements</p>}
+        </section>
+
+        <section className="sec">
+          <h2 className="h3 tc">Why MemoryVerse?</h2>
+          <div className="g3 mt32">
+            {[["🎮","Multiple Modes","Classic, Time Attack, and Challenge"],["🏆","Achievements","Unlock 8 unique badges"],["📊","Track Progress","Stats & history for every game"],["🎨","Beautiful Design","Dark & light themes"],["🔊","Sound Effects","Satisfying audio feedback"],["🌍","Leaderboard","Compete and climb the ranks"]].map(([ic,t,d])=>(
+              <div key={t} className="gc" style={{animation:"fadeUp .6s ease both"}}>
+                <div style={{fontSize:32,marginBottom:12}}>{ic}</div>
+                <div className="h4" style={{marginBottom:6}}>{t}</div>
+                <p style={{color:"var(--mut)",fontSize:14,lineHeight:1.6}}>{d}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+// ── LeaderboardPage ───────────────────────────────────
+function LeaderboardPage() {
+  const {lb,user}=useCtx();
+  const [filter,setFilter]=useState("all");
+  const [sortBy,setSortBy]=useState("score");
+  const rows=useMemo(()=>{
+    let r=[...lb]; if(filter!=="all") r=r.filter(x=>x.diff===filter);
+    return r.sort((a,b)=>sortBy==="score"?b.score-a.score:a.time-b.time);
+  },[lb,filter,sortBy]);
+
+  return (
+    <div className="page"><div className="con sec">
+      <div className="fb" style={{marginBottom:32,flexWrap:"wrap",gap:16}}>
+        <div><h1 className="h2 gt">Leaderboard</h1><p className="tm mt8">Top scores from all players</p></div>
+        <div className="fg">
+          <select className="input" style={{width:"auto",padding:"8px 12px"}} value={filter} onChange={e=>setFilter(e.target.value)}>
+            <option value="all">All Difficulties</option>{Object.entries(DIFFS).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+          </select>
+          <select className="input" style={{width:"auto",padding:"8px 12px"}} value={sortBy} onChange={e=>setSortBy(e.target.value)}>
+            <option value="score">By Score</option><option value="time">By Time</option>
+          </select>
+        </div>
+      </div>
+      {rows.length===0
+        ?<div className="tc" style={{padding:"60px 0"}}><div style={{fontSize:48,marginBottom:16}}>🏆</div><p className="tm">No scores yet. Be the first!</p></div>
+        :<div style={{display:"flex",flexDirection:"column",gap:10}}>{rows.map((e,i)=>(
+          <div key={i} className={`lbr${e.uid===user?.id?" me":""}${i===0?" t1":""}`}>
+            <span style={{fontSize:18,width:28,textAlign:"center"}}>{["🥇","🥈","🥉"][i]||<span style={{color:"var(--mut)",fontSize:13}}>{i+1}</span>}</span>
+            <div className="av" style={{width:34,height:34,fontSize:13}}>{(e.name||"?").slice(0,2).toUpperCase()}</div>
+            <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14}}>{e.name}</div><div style={{fontSize:11,color:"var(--mut)"}}><span className="badge ba" style={{fontSize:10,padding:"2px 8px"}}>{DIFFS[e.diff]?.label}</span>{" · "}{MODES[e.mode]?.label}</div></div>
+            <div style={{textAlign:"right"}}><div style={{fontWeight:800,fontSize:16,color:i===0?"var(--warn)":undefined}}>{e.score}</div><div style={{fontSize:11,color:"var(--mut)"}}>{fmt(e.time)} · {e.attempts} att.</div></div>
+          </div>
+        ))}</div>
+      }
+    </div></div>
+  );
+}
+
+// ── HowToPlayPage ─────────────────────────────────────
+function HowToPlayPage() {
+  const {setPage}=useCtx();
+  const steps=[
+    [1,"🃏","Choose your settings","Select difficulty (Easy–Extreme) and mode. Classic is great to start."],
+    [2,"👁️","Flip two cards","Click a face-down card to reveal it, then click another."],
+    [3,"✅","Match or memorize","Matching pairs stay face-up and glow green. Misses flip back."],
+    [4,"🔥","Build combos","Consecutive matches build a combo streak for bonus points."],
+    [5,"⚡","Score big","Fewer moves + faster time + bigger combos = higher score."],
+    [6,"🏆","Win and compete","Clear all pairs to win and climb the leaderboard!"],
+  ];
+  return (
+    <div className="page"><div className="con sec">
+      <div className="tc" style={{marginBottom:48}}><h1 className="h2 gt">How to Play</h1><p className="tm mt12">Master MemoryVerse in 6 steps</p></div>
+      <div style={{display:"flex",flexDirection:"column",gap:16,maxWidth:700,margin:"0 auto"}}>
+        {steps.map(([n,ic,t,d],i)=>(
+          <div key={n} className="step-card" style={{animationDelay:`${i*.08}s`}}>
+            <div className="step-num">{n}</div>
+            <div><div style={{fontSize:22,marginBottom:6}}>{ic} <span className="h4">{t}</span></div><p style={{color:"var(--mut)",fontSize:15,lineHeight:1.7}}>{d}</p></div>
+          </div>
+        ))}
+      </div>
+      <div style={{marginTop:64}}><h2 className="h3 tc" style={{marginBottom:32}}>Game Modes</h2>
+        <div className="g3">{Object.entries(MODES).map(([k,v])=><div key={k} className="gc tc"><div style={{fontSize:36,marginBottom:10}}>{v.icon}</div><div className="h4" style={{marginBottom:8}}>{v.label}</div><p style={{color:"var(--mut)",fontSize:14}}>{v.desc}</p></div>)}</div>
+      </div>
+      <div className="tc mt48"><button className="btn bp" style={{padding:"14px 40px",fontSize:17}} onClick={()=>setPage("game")}>🚀 Start Playing Now</button></div>
+    </div></div>
+  );
+}
+
+// ── ProfilePage ───────────────────────────────────────
+function ProfilePage() {
+  const {user,login,logout}=useCtx();
+  const [tab,setTab]=useState("stats");
+  const [signup,setSignup]=useState(false);
+  const [name,setName]=useState(""), [pass,setPass]=useState(""), [err,setErr]=useState("");
+
+  const doAuth=()=>{
+    if(!name.trim()||!pass.trim()){setErr("All fields required");return;}
+    const e=login(name.trim(),pass.trim(),signup);
+    if(e) setErr(e); else {setErr("");setName("");setPass("");}
+  };
+
+  if(!user) return (
+    <div className="page"><div className="con" style={{maxWidth:420,paddingTop:60}}>
+      <div className="gc">
+        <h2 className="h3 tc gt" style={{marginBottom:6}}>{signup?"Create Account":"Welcome Back"}</h2>
+        <p className="tm tc mt8" style={{marginBottom:28,fontSize:14}}>{signup?"Join to save scores and earn achievements":"Sign in to access your profile"}</p>
+        <label className="fl">Username</label>
+        <input className="input" placeholder="your_username" value={name} onChange={e=>setName(e.target.value)} style={{marginBottom:14}}/>
+        <label className="fl">Password</label>
+        <input className="input" type="password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)} style={{marginBottom:14}} onKeyDown={e=>e.key==="Enter"&&doAuth()}/>
+        {err&&<p style={{color:"var(--err)",fontSize:13,marginBottom:12}}>{err}</p>}
+        <button className="btn bp" style={{width:"100%"}} onClick={doAuth}>{signup?"🚀 Create Account":"🔑 Sign In"}</button>
+        <button className="btn bs" style={{width:"100%",marginTop:10}} onClick={()=>{setSignup(v=>!v);setErr("");}}>
+          {signup?"Already have an account? Sign in":"New here? Create account"}
+        </button>
+      </div>
+    </div></div>
+  );
+
+  const st=user.stats||initStats();
+  const wr=st.gamesPlayed?Math.round(st.gamesWon/st.gamesPlayed*100):0;
+  const scores=st.history.slice(0,10).map(h=>h.score||0);
+  const maxSc=Math.max(...scores,1);
+
+  return (
+    <div className="page"><div className="con sec">
+      <div style={{display:"flex",alignItems:"center",gap:20,marginBottom:36,flexWrap:"wrap"}}>
+        <div className="av" style={{width:72,height:72,fontSize:26}}>{user.avatar}</div>
+        <div><h1 className="h2 gt">{user.name}</h1>
+          <div className="fg mt8">
+            <span className="badge ba">🎮 {st.gamesPlayed} games</span>
+            <span className="badge bs2">🏆 {st.gamesWon} wins</span>
+            {st.bestScore>0&&<span className="badge bw">⭐ {st.bestScore} best</span>}
+          </div>
+        </div>
+        <button className="btn bs sm" style={{marginLeft:"auto"}} onClick={logout}>Sign Out</button>
+      </div>
+
+      <div className="fg" style={{marginBottom:28}}>
+        {["stats","achievements","history"].map(t=><button key={t} className={`pill${tab===t?" on":""}`} onClick={()=>setTab(t)} style={{textTransform:"capitalize"}}>{t}</button>)}
+      </div>
+
+      {tab==="stats"&&<div>
+        <div className="g4" style={{marginBottom:28}}>
+          {[["⚡","Best Score",st.bestScore],["🎯","Win Rate",`${wr}%`],["⏱","Best Time",st.bestTime?fmt(st.bestTime):"—"],["🎮","Games",st.gamesPlayed],["🔥","Max Combo",`${st.maxCombo}x`],["💎","Perfects",st.perfectGames],["📊","Avg Time",fmt(st.gamesPlayed?Math.round(st.totalTime/st.gamesPlayed):0)],["🎯","Avg Att.",(st.gamesPlayed?(st.totalAttempts/st.gamesPlayed).toFixed(1):0)]].map(([ic,l,v])=>(
+            <div key={l} className="chip"><div className="chip-v">{ic} {v}</div><div className="chip-l">{l}</div></div>
+          ))}
+        </div>
+        {scores.length>0&&<div className="gc"><div className="h4" style={{marginBottom:20}}>Recent Scores</div>
+          <div className="cbw" style={{borderBottom:"1px solid var(--bdr)",paddingBottom:4}}>
+            {scores.map((s,i)=><div key={i} className="cb" style={{height:`${(s/maxSc)*100}%`,minHeight:4}} title={`${s} pts`}/>)}
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"var(--mut)",marginTop:6}}><span>Oldest</span><span>Recent</span></div>
+        </div>}
+      </div>}
+
+      {tab==="achievements"&&<div className="g2">
+        {ACHS.map(a=>{const ul=(st.unlocked||[]).includes(a.id);return(
+          <div key={a.id} className={`ac-card${ul?" ul":""}`}>
+            <div style={{fontSize:28,flexShrink:0,opacity:ul?1:.3,filter:ul?"":"grayscale(1)"}}>{a.icon}</div>
+            <div><div style={{fontWeight:700,fontSize:14}}>{a.name}</div><div style={{color:"var(--mut)",fontSize:12,marginTop:2}}>{a.desc}</div>{ul&&<span className="badge bw" style={{marginTop:6,fontSize:10}}>✓ Unlocked</span>}</div>
+          </div>
+        );})}
+      </div>}
+
+      {tab==="history"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {st.history.length===0?<p className="tm tc" style={{padding:40}}>No games yet!</p>:st.history.map((h,i)=>(
+          <div key={i} className="lbr">
+            <span style={{fontSize:18}}>{h.won?"✅":"❌"}</span>
+            <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14}}>{DIFFS[h.diff]?.label} · {MODES[h.mode]?.label}</div><div style={{fontSize:11,color:"var(--mut)"}}>{new Date(h.date).toLocaleDateString()}</div></div>
+            <div style={{textAlign:"right"}}><div style={{fontWeight:800,fontSize:15}}>{h.score||0}</div><div style={{fontSize:11,color:"var(--mut)"}}>{fmt(h.time)} · {h.attempts} att.</div></div>
+          </div>
+        ))}
+      </div>}
+    </div></div>
+  );
+}
+
+// ── SettingsPage ──────────────────────────────────────
+function SettingsPage() {
+  const {theme,setTheme,soundOn,setSoundOn,diff,setDiff,mode,setMode,showToast}=useCtx();
+  const Toggle=({on,toggle})=><div className={`tsw ${on?"on":"off"}`} onClick={toggle}><div className="tth"/></div>;
+  const clearData=()=>{
+    if(!confirm("Reset ALL data? Cannot be undone.")) return;
+    ["mv_users","mv_user","mv_lb","mv_theme","mv_diff","mv_mode","mv_sound"].forEach(k=>localStorage.removeItem(k));
+    showToast("All data cleared","🗑️");
+    setTimeout(()=>window.location.reload(),1000);
+  };
+  return (
+    <div className="page"><div className="con sec" style={{maxWidth:600}}>
+      <h1 className="h2 gt" style={{marginBottom:32}}>Settings</h1>
+      <div className="gc" style={{marginBottom:20}}>
+        <h3 className="h4" style={{marginBottom:16}}>Appearance</h3>
+        <div className="tr"><div><div style={{fontWeight:600}}>Dark Mode</div><div style={{fontSize:13,color:"var(--mut)"}}>Toggle dark/light theme</div></div><Toggle on={theme==="dark"} toggle={()=>setTheme(t=>t==="dark"?"light":"dark")}/></div>
+      </div>
+      <div className="gc" style={{marginBottom:20}}>
+        <h3 className="h4" style={{marginBottom:16}}>Audio</h3>
+        <div className="tr"><div><div style={{fontWeight:600}}>Sound Effects</div><div style={{fontSize:13,color:"var(--mut)"}}>Flip, match, win sounds</div></div><Toggle on={soundOn} toggle={()=>setSoundOn(v=>!v)}/></div>
+      </div>
+      <div className="gc" style={{marginBottom:20}}>
+        <h3 className="h4" style={{marginBottom:16}}>Default Game Settings</h3>
+        <label className="fl">Difficulty</label>
+        <div className="pg" style={{marginBottom:16}}>{Object.entries(DIFFS).map(([k,v])=><button key={k} className={`pill${diff===k?" on":""}`} onClick={()=>setDiff(k)}>{v.icon} {v.label}</button>)}</div>
+        <label className="fl">Mode</label>
+        <div className="pg">{Object.entries(MODES).map(([k,v])=><button key={k} className={`pill${mode===k?" on":""}`} onClick={()=>setMode(k)}>{v.icon} {v.label}</button>)}</div>
+      </div>
+      <div className="gc" style={{borderColor:"rgba(255,94,94,.2)"}}>
+        <h3 className="h4" style={{marginBottom:8,color:"var(--err)"}}>Danger Zone</h3>
+        <p style={{color:"var(--mut)",fontSize:14,marginBottom:16}}>Reset all game data including scores, achievements, and accounts.</p>
+        <button className="btn bd sm" onClick={clearData}>🗑️ Reset All Data</button>
+      </div>
+    </div></div>
+  );
+}
+
+// ── Nav + Router + App ────────────────────────────────
+function Nav() {
+  const {page,setPage,theme,setTheme,soundOn,setSoundOn,user}=useCtx();
+  const items=[{id:"home",l:"Home",i:"🏠"},{id:"game",l:"Play",i:"🎮"},{id:"leaderboard",l:"Leaderboard",i:"🏆"},{id:"howtoplay",l:"How to Play",i:"📖"},{id:"profile",l:user?user.name.slice(0,8):"Profile",i:"👤"},{id:"settings",l:"Settings",i:"⚙️"}];
+  return (<>
+    <nav className="nav">
+      <div className="nav-logo" onClick={()=>setPage("home")}>MemoryVerse</div>
+      <div className="nav-links">{items.map(n=><button key={n.id} className={`nl${page===n.id?" on":""}`} onClick={()=>setPage(n.id)}>{n.l}</button>)}</div>
+      <div style={{display:"flex",gap:8}}>
+        <button className="ibtn" onClick={()=>setSoundOn(v=>!v)}>{soundOn?"🔊":"🔇"}</button>
+        <button className="ibtn" onClick={()=>setTheme(t=>t==="dark"?"light":"dark")}>{theme==="dark"?"☀️":"🌙"}</button>
+      </div>
+    </nav>
+    <nav className="mnav">{items.map(n=><button key={n.id} className={`mnb${page===n.id?" on":""}`} onClick={()=>setPage(n.id)}><span>{n.i}</span><span>{n.l.slice(0,7)}</span></button>)}</nav>
+  </>);
+}
+
+function App() {
+  const {page}=useCtx();
+  const P={home:<HomePage/>,game:<GamePage/>,leaderboard:<LeaderboardPage/>,howtoplay:<HowToPlayPage/>,profile:<ProfilePage/>,settings:<SettingsPage/>};
+  return <>{P[page]||<HomePage/>}</>;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <Provider><Nav/><App/></Provider>
+);
+</script>
+</body>
+</html>
